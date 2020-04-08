@@ -9,4 +9,28 @@
   <artifactId>comcat-core</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>comcat-core</name>
+	<properties>
+		<poi.version>4.1.2</poi.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi</artifactId>
+			<version>${poi.version}</version>
+		</dependency>
+	</dependencies>
+	<build>
+	</build>
 </project>

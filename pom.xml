@@ -4,9 +4,121 @@
 	<artifactId>comcat</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<name>comcat</name>
+	<name>Comcat Project Set</name>
 	<description>Comics Catalog parent</description>
 	<modules>
 		<module>comcat-core</module>
 	</modules>
+	<url>http://comcat.samajackun.com</url>
+	<organization>
+		<name>Samajackun Software Engineering</name>
+		<url>http://www.samajackun.com</url>
+	</organization>
+	<issueManagement>
+		<system>issues on github.com</system>
+		<url>https://github.com/issues</url>
+	</issueManagement>
+	<licenses>
+		<license>
+			<name>Apache License 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0</url>
+		</license>
+	</licenses>
+	<scm>
+		<connection>scm:git:https://github.com/LittleSanti/comcat</connection>
+		<tag>1.0.0-SNAPSHOT</tag>
+		<url>https://github.com/LittleSanti/comcat</url>
+	</scm>
+	<developers>
+		<developer>
+			<name>LittleSanti</name>
+			<email>littlesanti3x1@gmail.com</email>
+			<organization>Samajackun Software</organization>
+			<organizationUrl>http://www.samajackun.com</organizationUrl>
+		</developer>
+	</developers>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>4.8.2</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>commons-logging</groupId>
+				<artifactId>commons-logging</artifactId>
+				<version>1.1.1</version>
+			</dependency>
+			<dependency>
+				<groupId>log4j</groupId>
+				<artifactId>log4j</artifactId>
+				<version>1.2.17</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.8.1</version>
+				<configuration>
+					<compilerVersion>1.8</compilerVersion>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.1.1</version>
+				<configuration>
+					<tags>
+						<tag>
+							<name>goal</name>
+							<placement>t</placement>
+							<head>goal for this plugin:</head>
+						</tag>
+						<tag>
+							<name>phase</name>
+							<placement>t</placement>
+							<head>default phase for this plugin:</head>
+						</tag>
+						<tag>
+							<name>param</name>
+							<placement>f</placement>
+							<head>input parameter:</head>
+						</tag>
+					</tags>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-project-info-reports-plugin</artifactId>
+				<version>3.0.0</version>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>index</report>
+							<report>issue-management</report>
+							<report>dependencies</report>
+							<report>licenses</report>
+							<report>modules</report>
+							<report>scm</report>
+							<report>summary</report>
+							<report>plugins</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+		</plugins>
+	</reporting>
 </project>
