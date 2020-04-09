@@ -12,19 +12,27 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
 
-public class ImageFactory
+public final class ImageFactory
 {
 	private static final Log LOG=LogFactory.getLog(ImageFactory.class);
 
 	private static final ImageFactory INSTANCE=new ImageFactory();
 
-	private final File root=new File(System.getProperty("comcat.cache.dir") == null
-		? System.getProperty("user.dir")
-		: System.getProperty("comcat.cache.dir"));
+	private final File root=createRootDir();
 
 	public static ImageFactory getInstance()
 	{
 		return INSTANCE;
+	}
+
+	private static File createRootDir()
+	{
+		String rootDir=System.getProperty("com.samajackun.comcat.cache.dir");
+		File root=new File(rootDir == null
+			? System.getProperty("user.dir")
+			: rootDir);
+		root.mkdirs();
+		return root;
 	}
 
 	private ImageFactory()

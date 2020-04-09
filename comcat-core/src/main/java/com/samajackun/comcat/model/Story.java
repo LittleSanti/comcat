@@ -1,6 +1,6 @@
 package com.samajackun.comcat.model;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class Story
@@ -25,7 +25,7 @@ public class Story
 
 	private Image cover;
 
-	private final Set<NamedCharacter> characters=new HashSet<>();
+	private final Set<NamedCharacter> characters=new LinkedHashSet<>();
 
 	public Story(String code, String title)
 	{

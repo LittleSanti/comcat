@@ -3,16 +3,27 @@ package com.samajackun.comcat.export.excel;
 import java.awt.Dimension;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFClientAnchor;
+import org.apache.poi.hssf.usermodel.HSSFFont;
 import org.apache.poi.hssf.usermodel.HSSFPatriarch;
 import org.apache.poi.hssf.usermodel.HSSFPicture;
+import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.ClientAnchor;
+import org.apache.poi.ss.usermodel.ClientAnchor.AnchorType;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 
@@ -20,17 +31,29 @@ import com.samajackun.comcat.export.Exporter;
 import com.samajackun.comcat.model.Image;
 import com.samajackun.comcat.model.Image.Format;
 import com.samajackun.comcat.model.Issue;
+import com.samajackun.comcat.model.NamedCharacter;
 import com.samajackun.comcat.model.Story;
 
 public class ExcelExporter implements Exporter
 {
 	private static final Log LOG=LogFactory.getLog(ExcelExporter.class);
 
-	private final double ratioRef=0.716796875d;
+	private final int minIssueRows;
 
-	private final double ratio=18.0d;
+	private final int coverWidthInPixels;
 
-	private final int coverHeight=9;
+	private final int coverHeightInPixels;
+
+	private final List<ColumnSetup> columnSetups;
+
+	public ExcelExporter(int minIssueRows, int coverWidthInPixels, int coverHeightInPixels, List<ColumnSetup> columnSetups)
+	{
+		super();
+		this.minIssueRows=minIssueRows;
+		this.coverWidthInPixels=coverWidthInPixels;
+		this.coverHeightInPixels=coverHeightInPixels;
+		this.columnSetups=columnSetups;
+	}
 
 	@Override
 	public void export(Stream<Issue> issues, OutputStream output)
@@ -38,62 +61,154 @@ public class ExcelExporter implements Exporter
 	{
 		try (HSSFWorkbook wb=new HSSFWorkbook())
 		{
-			HSSFSheet sheet=wb.createSheet("issues");
+			HSSFSheet sheet=wb.createSheet("números");
+			initSheet(sheet);
 			issues.forEach(x -> export(x, sheet));
 			wb.write(output);
 		}
 	}
 
+	private void initSheet(HSSFSheet sheet)
+	{
+		HSSFCellStyle headerStyle=createHeaderStyle(sheet.getWorkbook());
+		HSSFRow headerRow=sheet.createRow(0);
+		for (int i=0; i < this.columnSetups.size(); i++)
+		{
+			ColumnSetup columnSetup=this.columnSetups.get(i);
+			// Fila de encabezados:
+			HSSFCell cell=headerRow.createCell(i);
+			cell.setCellValue(columnSetup.getTitle());
+			cell.setCellStyle(headerStyle);
+			// Filas de datos:
+			HSSFCellStyle style=createStyle(sheet.getWorkbook(), columnSetup);
+			sheet.setColumnWidth(i, (int)(256 * columnSetup.getWidth()));
+			sheet.setDefaultColumnStyle(i, style);
+		}
+	}
+
+	private static HSSFCellStyle createHeaderStyle(HSSFWorkbook workbook)
+	{
+		HSSFCellStyle headerStyle=workbook.createCellStyle();
+		headerStyle.setVerticalAlignment(VerticalAlignment.TOP);
+		headerStyle.setAlignment(HorizontalAlignment.CENTER);
+		headerStyle.setWrapText(true);
+		headerStyle.setShrinkToFit(true);
+		headerStyle.setFillBackgroundColor(HSSFColor.HSSFColorPredefined.GREY_25_PERCENT.getIndex());
+		HSSFFont font=workbook.createFont();
+		font.setBold(true);
+		headerStyle.setFont(font);
+		return headerStyle;
+	}
+
+	private static HSSFCellStyle createStyle(HSSFWorkbook workbook, ColumnSetup columnSetup)
+	{
+		HSSFCellStyle style=workbook.createCellStyle();
+		style.setVerticalAlignment(columnSetup.getVerticalAlignment());
+		style.setAlignment(columnSetup.getHorizontalAlignment());
+		if (columnSetup.getFontSize() > 0)
+		{
+			HSSFFont font=workbook.createFont();
+			font.setFontHeightInPoints((short)columnSetup.getFontSize());
+			style.setFont(font);
+		}
+		if (columnSetup.getFormat() != null)
+		{
+			CreationHelper createHelper=workbook.getCreationHelper();
+			style.setDataFormat(createHelper.createDataFormat().getFormat(columnSetup.getFormat()));
+		}
+		style.setWrapText(columnSetup.isWrapText());
+		style.setShrinkToFit(columnSetup.isShrinkToFit());
+		return style;
+	}
+
 	protected void export(Issue issue, HSSFSheet sheet)
 	{
-		int row=sheet.getLastRowNum();
-		sheet.setColumnWidth(1, (int)(256 * this.ratio));
-		sheet.setColumnWidth(2, (int)(256 * this.ratio));
+		int rowNum=1 + sheet.getLastRowNum();
+		int issueRows=Math.max(this.minIssueRows, issue.getStories().size());
+		HSSFRow row=sheet.createRow(rowNum);
+
 		int cell=0;
-		sheet.addMergedRegion(new CellRangeAddress(row, row + this.coverHeight - 1, cell, cell));
-		sheet.getRow(row).getCell(cell++).setCellValue(issue.getNumber());
 
-		sheet.addMergedRegion(new CellRangeAddress(row, row + this.coverHeight - 1, cell, cell));
-		sheet.getRow(row).getCell(cell++).setCellValue(issue.getTitle());
+		// Publisher
+		row.createCell(cell).setCellValue(issue.getPublisher().getName());
+		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
+		cell++;
 
-		sheet.addMergedRegion(new CellRangeAddress(row, row + this.coverHeight - 1, cell, cell));
+		// Collection
+		row.createCell(cell).setCellValue(issue.getCollection().getName());
+		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
+		cell++;
+
+		// Issue number
+		row.createCell(cell).setCellValue(issue.getNumber() == null
+			? ""
+			: issue.getNumber());
+		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
+		cell++;
+
+		// Issue cover
 		if (issue.getCover() != null)
 		{
 			try
 			{
-				putImage(issue.getCover(), sheet, row, cell);
+				putImage(issue.getCover(), sheet, rowNum, cell);
 			}
 			catch (IOException e)
 			{
-				LOG.error("Loading cover image data from issue " + issue);
+				LOG.error("Error loading cover image data from issue " + issue);
 			}
 		}
+		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
 		cell++;
 
-		sheet.addMergedRegion(new CellRangeAddress(row, row + this.coverHeight - 1, cell, cell));
+		// Issue backcover
 		if (issue.getBackCover() != null)
 		{
 			try
 			{
-				putImage(issue.getBackCover(), sheet, row, cell);
+				putImage(issue.getBackCover(), sheet, rowNum, cell);
 			}
 			catch (IOException e)
 			{
-				LOG.error("Loading backcover image data from issue " + issue);
+				LOG.error("Error loading backcover image data from issue " + issue);
 			}
 		}
+		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
 		cell++;
 
-		RowIndex rowIndex=new RowIndex(row);
+		// Issue date
+		row.createCell(cell).setCellValue(issue.getDate());
+		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
+		cell++;
+
+		// Issue code
+		row.createCell(cell).setCellValue(issue.getCode());
+		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
+		cell++;
+
+		// Issue title
+		row.createCell(cell).setCellValue(issue.getTitle() == null
+			? ""
+			: issue.getTitle());
+		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
+		cell++;
+
+		// Issue stories
+		Counter rowIndex=new Counter(rowNum);
 		final int currentCell=cell;
-		issue.getStories().stream().filter(x -> x.getPages() > 1).forEach(x -> exportStory(x, sheet, rowIndex, currentCell));
+		// issue.getStories().stream().filter(x -> x.getPages() > 1).forEach(x -> exportStory(x, sheet, rowIndex, currentCell));
+		issue.getStories().stream().forEach(x -> exportStory(x, sheet, rowIndex, currentCell));
+		for (int i=rowIndex.getIndex(); i < rowNum + issueRows; i++)
+		{
+			sheet.createRow(i);
+		}
 	}
 
-	private class RowIndex
+	private class Counter
 	{
 		private int index;
 
-		public RowIndex(int index)
+		public Counter(int index)
 		{
 			super();
 			this.index=index;
@@ -110,19 +225,48 @@ public class ExcelExporter implements Exporter
 		}
 	}
 
-	protected void exportStory(Story story, HSSFSheet sheet, RowIndex rowIndex, int firstCell)
+	protected void exportStory(Story story, HSSFSheet sheet, Counter rowIndex, int firstCell)
 	{
-		int row=rowIndex.getIndex();
+		int rowNum=rowIndex.getIndex();
 		int cell=firstCell;
-		sheet.getRow(row).getCell(cell++).setCellValue(story.getCode());
-		sheet.getRow(row).getCell(cell++).setCellValue(story.getTitle());
-		sheet.getRow(row).getCell(cell++).setCellValue(story.getHero().getName());
-		sheet.getRow(row).getCell(cell++).setCellValue(story.getPages());
-		sheet.getRow(row).getCell(cell++).setCellValue(story.getArt().getName());
-		sheet.getRow(row).getCell(cell++).setCellValue(story.getInk().getName());
-		sheet.getRow(row).getCell(cell++).setCellValue(story.getPencil().getName());
-		sheet.getRow(row).getCell(cell++).setCellValue(story.getWriter().getName());
+		HSSFRow row=sheet.getRow(rowNum) != null
+			? sheet.getRow(rowNum)
+			: sheet.createRow(rowNum);
+		row.createCell(cell++).setCellValue(story.getCode());
+		row.createCell(cell++).setCellValue(story.getTitle() == null
+			? ""
+			: story.getTitle());
+		row.createCell(cell++).setCellValue(story.getHero() == null
+			? ""
+			: story.getHero().getName());
+		row.createCell(cell++).setCellValue(serialize(story.getCharacters()));
+		row.createCell(cell++).setCellValue(story.getPages());
+		row.createCell(cell++).setCellValue(story.getArt() == null
+			? ""
+			: story.getArt().getName());
+		row.createCell(cell++).setCellValue(story.getInk() == null
+			? ""
+			: story.getInk().getName());
+		row.createCell(cell++).setCellValue(story.getPencil() == null
+			? ""
+			: story.getPencil().getName());
+		row.createCell(cell++).setCellValue(story.getWriter() == null
+			? ""
+			: story.getWriter().getName());
 		rowIndex.inc();
+	}
+
+	private static String serialize(Set<NamedCharacter> characters)
+	{
+		StringBuilder s=new StringBuilder(20 * characters.size());
+		characters.stream().forEach(x -> {
+			if (s.length() > 0)
+			{
+				s.append(", ");
+			}
+			s.append(x.getName());
+		});
+		return s.toString();
 	}
 
 	protected void putImage(Image image, HSSFSheet sheet, int row, int column)
@@ -134,13 +278,31 @@ public class ExcelExporter implements Exporter
 		ClientAnchor clientAnchor=new HSSFClientAnchor();
 		clientAnchor.setRow1(row);
 		clientAnchor.setCol1(column);
+		clientAnchor.setRow2(row + this.minIssueRows);
+		clientAnchor.setCol2(column);
+		clientAnchor.setAnchorType(AnchorType.MOVE_DONT_RESIZE);
 		HSSFPicture picture=drawing.createPicture(clientAnchor, pictureIndex);
 		// Redimensionar la imagen:
 		// He observado que llamar a picture.getImageDimension().setSize() es tan útil como cantarle una saeta a una berenjena.
 		// En cambio, sí funciona resize(sx,sy), pero ojo: la escala (sx y sy) no es respecto a las dimensiones original de la imagen, sino a las de UNA celda.
 		Dimension imageDimension=picture.getImageDimension();
-		int coverWidth=(int)((imageDimension.getWidth() / imageDimension.getHeight()) / this.ratioRef);
-		picture.resize(coverWidth, this.coverHeight);
+		double coverRatio=imageDimension.getHeight() / imageDimension.getWidth();
+		int width;
+		// int height;
+		if (coverRatio * this.coverWidthInPixels > this.coverHeightInPixels)
+		{
+			// Hay que reducir a lo ancho:
+			width=(int)(this.coverHeightInPixels / coverRatio);
+			// height=this.coverHeightInPixels;
+		}
+		else
+		{
+			width=this.coverWidthInPixels;
+			// height=(int)(width * coverRatio);
+		}
+		double scale=(double)width / this.coverWidthInPixels;
+		// System.out.println("width=" + width + ", height=" + height + ", coverWidthInPixels=" + this.coverWidthInPixels + ", coverHeightInPixels=" + this.coverHeightInPixels + ", scale=" + scale);
+		picture.resize(scale);
 	}
 
 	protected static int toWorkbookFormat(Format formatName)

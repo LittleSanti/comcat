@@ -5,6 +5,8 @@ import java.util.TreeMap;
 
 public class Collection
 {
+	private final String code;
+
 	private final String name;
 
 	private final String country;
@@ -13,9 +15,10 @@ public class Collection
 
 	private final SortedMap<String, Issue> issues=new TreeMap<>();
 
-	public Collection(String name, String country, String language)
+	public Collection(String code, String name, String country, String language)
 	{
 		super();
+		this.code=code;
 		this.name=name;
 		this.country=country;
 		this.language=language;
@@ -41,10 +44,15 @@ public class Collection
 		return this.issues;
 	}
 
+	public String getCode()
+	{
+		return this.code;
+	}
+
 	@Override
 	public String toString()
 	{
-		return "Collection [name=" + this.name + ", country=" + this.country + ", language=" + this.language + "]";
+		return "Collection [code=" + this.code + ", name=" + this.name + ", country=" + this.country + ", language=" + this.language + ", issues=" + this.issues.size() + "]";
 	}
 
 }

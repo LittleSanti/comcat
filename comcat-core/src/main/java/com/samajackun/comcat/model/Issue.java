@@ -14,6 +14,8 @@ public class Issue
 
 	private final LocalDate date;
 
+	private final String code;
+
 	private final String title;
 
 	private final int pages;
@@ -24,13 +26,14 @@ public class Issue
 
 	private Image backCover;
 
-	public Issue(Publisher publisher, Collection collection, String number, LocalDate date, String title, int pages)
+	public Issue(Publisher publisher, Collection collection, String number, LocalDate date, String code, String title, int pages)
 	{
 		super();
 		this.publisher=publisher;
 		this.collection=collection;
 		this.number=number;
 		this.date=date;
+		this.code=code;
 		this.title=title;
 		this.pages=pages;
 	}
@@ -88,5 +91,10 @@ public class Issue
 	public String getNumber()
 	{
 		return this.number;
+	}
+
+	public String getCode()
+	{
+		return this.code;
 	}
 }
