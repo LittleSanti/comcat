@@ -25,13 +25,14 @@ public final class DefaultExporterFactory
 		int coverWidthInPixels=190;
 		int coverHeightInPixels=330;
 		ColumnSetup[] columnSetups= {
-			new ColumnSetup("editorial", 12, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // publisher
-			new ColumnSetup("colección", 12, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // collection
 			new ColumnSetup("número", 12, HorizontalAlignment.RIGHT, VerticalAlignment.TOP, 24, false, false, null), // issue number
 			new ColumnSetup("portada", ratio, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // issue cover
-			new ColumnSetup("contraportada", ratio, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // issue back cover
+			// new ColumnSetup("contraportada", ratio, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // issue back cover
 			new ColumnSetup("fecha", 10, HorizontalAlignment.RIGHT, VerticalAlignment.TOP, 0, false, false, "dd/MM/yyyy"), // issue date
 			new ColumnSetup("código", 8, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // issue code
+			new ColumnSetup("editorial", 12, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // publisher
+			new ColumnSetup("colección", 12, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // collection
+			new ColumnSetup("le tengo", 13, HorizontalAlignment.CENTER, VerticalAlignment.TOP, 0, false, false, null), // owned
 			new ColumnSetup("título", 30, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, true, false, null), // issue title
 			new ColumnSetup("código", 8, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // story code
 			new ColumnSetup("historia", 25, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // story title
@@ -41,7 +42,11 @@ public final class DefaultExporterFactory
 			new ColumnSetup("dibujo", 20, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // art
 			new ColumnSetup("tinta", 20, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // ink
 			new ColumnSetup("lápices", 20, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // pencils
-			new ColumnSetup("guión", 20, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // plot
+			new ColumnSetup("escritor", 20, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // writer
+			new ColumnSetup("argumento", 20, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // plot
+			new ColumnSetup("colores", 20, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // colours
+			new ColumnSetup("guión", 20, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // script
+			new ColumnSetup("idea", 20, HorizontalAlignment.LEFT, VerticalAlignment.TOP, 0, false, false, null), // idea
 		};
 		return new ExcelExporter(minIssueRows, coverWidthInPixels, coverHeightInPixels, Arrays.asList(columnSetups));
 	}

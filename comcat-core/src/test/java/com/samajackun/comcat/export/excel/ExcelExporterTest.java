@@ -111,6 +111,7 @@ public class ExcelExporterTest
 		String code=collection.getCode() + "-" + i;
 		Issue issue=new Issue(publisher, collection, number, date, code, title, pages);
 		issue.setCover(ImageFactory.getInstance().getImage(new File("target/test-classes/0" + i + ".png")));
+		issue.setOwned(i % 2 == 0);
 		for (int j=0; j < 2 * (1 + i); j++)
 		{
 			issue.getStories().add(createStory(j));
@@ -121,10 +122,10 @@ public class ExcelExporterTest
 	private Story createStory(int j)
 	{
 		Story story=new Story("a/" + j, "Story no. " + j);
-		story.setArt(ArtistFactory.getInstance().getByCode("cb", "Carl Barks"));
-		story.setInk(ArtistFactory.getInstance().getByCode("gc", "Giorgio Cavazzano"));
-		story.setPencil(ArtistFactory.getInstance().getByCode("pm", "Paul Murry"));
-		story.setWriter(ArtistFactory.getInstance().getByCode("martina", "Guido Martina"));
+		story.getArts().add(ArtistFactory.getInstance().getByCode("cb", "Carl Barks"));
+		story.getInks().add(ArtistFactory.getInstance().getByCode("gc", "Giorgio Cavazzano"));
+		story.getPencils().add(ArtistFactory.getInstance().getByCode("pm", "Paul Murry"));
+		story.getWriters().add(ArtistFactory.getInstance().getByCode("martina", "Guido Martina"));
 		story.setHero(NamedCharacterFactory.getInstance().getByCode("dd", "Donald Duck"));
 		story.setPages(20 + j);
 		if (j > 0)

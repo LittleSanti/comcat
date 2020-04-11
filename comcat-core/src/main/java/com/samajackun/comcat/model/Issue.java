@@ -20,11 +20,11 @@ public class Issue
 
 	private final int pages;
 
-	private final List<Story> stories=new ArrayList<>();
-
 	private Image cover;
 
-	private Image backCover;
+	private boolean owned;
+
+	private final List<Story> stories=new ArrayList<>();
 
 	public Issue(Publisher publisher, Collection collection, String number, LocalDate date, String code, String title, int pages)
 	{
@@ -78,16 +78,6 @@ public class Issue
 		this.cover=cover;
 	}
 
-	public Image getBackCover()
-	{
-		return this.backCover;
-	}
-
-	public void setBackCover(Image backCover)
-	{
-		this.backCover=backCover;
-	}
-
 	public String getNumber()
 	{
 		return this.number;
@@ -97,4 +87,21 @@ public class Issue
 	{
 		return this.code;
 	}
+
+	public boolean isOwned()
+	{
+		return this.owned;
+	}
+
+	public void setOwned(boolean owned)
+	{
+		this.owned=owned;
+	}
+
+	@Override
+	public String toString()
+	{
+		return "Issue [publisher=" + this.publisher + ", collection=" + this.collection + ", number=" + this.number + ", date=" + this.date + ", code=" + this.code + ", title=" + this.title + ", pages=" + this.pages + ", cover=" + this.cover + ", owned=" + this.owned + ", stories=" + this.stories + "]";
+	}
+
 }

@@ -2,6 +2,7 @@ package com.samajackun.comcat.model;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class Story
 {
@@ -13,13 +14,21 @@ public class Story
 
 	private NamedCharacter hero;
 
-	private Artist writer;
+	private final Set<Artist> writers=new TreeSet<>();
 
-	private Artist ink;
+	private final Set<Artist> inks=new TreeSet<>();
 
-	private Artist art;
+	private final Set<Artist> arts=new TreeSet<>();
 
-	private Artist pencil;
+	private final Set<Artist> pencils=new TreeSet<>();
+
+	private final Set<Artist> plots=new TreeSet<>();
+
+	private final Set<Artist> colours=new TreeSet<>();
+
+	private final Set<Artist> scripts=new TreeSet<>();
+
+	private final Set<Artist> ideas=new TreeSet<>();
 	// Idea
 	// Plot
 
@@ -42,46 +51,6 @@ public class Story
 	public void setPages(double pages)
 	{
 		this.pages=pages;
-	}
-
-	public Artist getWriter()
-	{
-		return this.writer;
-	}
-
-	public void setWriter(Artist writer)
-	{
-		this.writer=writer;
-	}
-
-	public Artist getInk()
-	{
-		return this.ink;
-	}
-
-	public void setInk(Artist ink)
-	{
-		this.ink=ink;
-	}
-
-	public Artist getArt()
-	{
-		return this.art;
-	}
-
-	public void setArt(Artist art)
-	{
-		this.art=art;
-	}
-
-	public Artist getPencil()
-	{
-		return this.pencil;
-	}
-
-	public void setPencil(Artist pencil)
-	{
-		this.pencil=pencil;
 	}
 
 	public String getCode()
@@ -119,10 +88,50 @@ public class Story
 		return this.characters;
 	}
 
+	public Set<Artist> getWriters()
+	{
+		return this.writers;
+	}
+
+	public Set<Artist> getInks()
+	{
+		return this.inks;
+	}
+
+	public Set<Artist> getArts()
+	{
+		return this.arts;
+	}
+
+	public Set<Artist> getPencils()
+	{
+		return this.pencils;
+	}
+
+	public Set<Artist> getPlots()
+	{
+		return this.plots;
+	}
+
+	public Set<Artist> getColours()
+	{
+		return this.colours;
+	}
+
+	public Set<Artist> getScripts()
+	{
+		return this.scripts;
+	}
+
+	public Set<Artist> getIdeas()
+	{
+		return this.ideas;
+	}
+
 	@Override
 	public String toString()
 	{
-		return "Story [code=" + this.code + ", title=" + this.title + ", pages=" + this.pages + ", hero=" + this.hero + ", writer=" + this.writer + ", ink=" + this.ink + ", art=" + this.art + ", pencil=" + this.pencil + ", cover=" + this.cover + ", characters=" + this.characters + "]";
+		return "Story [code=" + this.code + ", title=" + this.title + ", pages=" + this.pages + ", hero=" + this.hero + ", writers=" + this.writers + ", inks=" + this.inks + ", arts=" + this.arts + ", pencils=" + this.pencils + ", plots=" + this.plots + ", colours=" + this.colours + ", script=" + this.scripts + ", idea=" + this.ideas + ", cover=" + this.cover + ", characters=" + this.characters + "]";
 	}
 
 }

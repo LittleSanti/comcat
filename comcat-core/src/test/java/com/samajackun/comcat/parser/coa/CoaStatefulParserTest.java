@@ -1,8 +1,10 @@
 package com.samajackun.comcat.parser.coa;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
@@ -59,7 +61,7 @@ public class CoaStatefulParserTest
 		Document doc=parseFile("dm150.html");
 		try
 		{
-			Publisher publisher=new CoaStatefulParser(doc, null, "150").parsePublisher("150");
+			Publisher publisher=new CoaStatefulParser(doc, null).parsePublisher("150");
 			assertNotNull(publisher);
 			assertEquals("Montena", publisher.getCode());
 			assertEquals("Montena", publisher.getName());
@@ -79,7 +81,7 @@ public class CoaStatefulParserTest
 		Document doc=parseFile("wdc150.html");
 		try
 		{
-			Publisher publisher=new CoaStatefulParser(doc, null, "150").parsePublisher("150");
+			Publisher publisher=new CoaStatefulParser(doc, null).parsePublisher("150");
 			assertNotNull(publisher);
 			assertEquals("Dl", publisher.getCode());
 			assertEquals("Dell", publisher.getName());
@@ -118,7 +120,7 @@ public class CoaStatefulParserTest
 		Document doc=parseFile("wdc150.html");
 		try
 		{
-			Collection collection=new CoaStatefulParser(doc, null, "150").parseCollection();
+			Collection collection=new CoaStatefulParser(doc, null).parseCollection();
 			assertNotNull(collection);
 			assertEquals("us/WDC", collection.getCode());
 			assertEquals("Walt Disney's Comics and Stories", collection.getName());
@@ -140,7 +142,7 @@ public class CoaStatefulParserTest
 		Document doc=parseFile("dm150.html");
 		try
 		{
-			LocalDate date=new CoaStatefulParser(doc, null, "150").parseDate();
+			LocalDate date=new CoaStatefulParser(doc, null).parseDate();
 			assertNotNull(date);
 			assertEquals("1979-08-23", date.toString());
 		}
@@ -159,7 +161,7 @@ public class CoaStatefulParserTest
 		Document doc=parseFile("wdc150.html");
 		try
 		{
-			LocalDate date=new CoaStatefulParser(doc, null, "150").parseDate();
+			LocalDate date=new CoaStatefulParser(doc, null).parseDate();
 			assertNotNull(date);
 			assertEquals("1953-03-01", date.toString());
 		}
@@ -178,7 +180,7 @@ public class CoaStatefulParserTest
 		Document doc=parseFile("dm150.html");
 		try
 		{
-			String title=new CoaStatefulParser(doc, null, "150").parseTitle();
+			String title=new CoaStatefulParser(doc, null).parseTitle();
 			assertNull(title);
 		}
 		catch (XPathExpressionException e)
@@ -196,7 +198,7 @@ public class CoaStatefulParserTest
 		Document doc=parseFile("d132.html");
 		try
 		{
-			String title=new CoaStatefulParser(doc, null, "32").parseTitle();
+			String title=new CoaStatefulParser(doc, null).parseTitle();
 			assertEquals("Examen de conciencia", title);
 		}
 		catch (XPathExpressionException e)
@@ -214,7 +216,7 @@ public class CoaStatefulParserTest
 		Document doc=parseFile("dm150.html");
 		try
 		{
-			int pages=new CoaStatefulParser(doc, null, "150").parsePages();
+			int pages=new CoaStatefulParser(doc, null).parsePages();
 			assertEquals(100, pages);
 		}
 		catch (XPathExpressionException e)
@@ -232,7 +234,7 @@ public class CoaStatefulParserTest
 		Document doc=parseFile("wdc150.html");
 		try
 		{
-			int pages=new CoaStatefulParser(doc, null, "150").parsePages();
+			int pages=new CoaStatefulParser(doc, null).parsePages();
 			assertEquals(-1, pages);
 		}
 		catch (XPathExpressionException e)
@@ -243,14 +245,36 @@ public class CoaStatefulParserTest
 	}
 
 	@Test
-	public void parseIssue()
+	public void parseIssueNotOwned()
 		throws SAXException,
 		IOException
 	{
 		Document doc=parseFile("dm150.html");
 		try
 		{
-			Issue issue=new CoaStatefulParser(doc, new URL("https://inducks.org/issue.php?c=es/DM++150"), "150").parseIssue();
+			Issue issue=new CoaStatefulParser(doc, new URL("https://inducks.org/issue.php?c=es/DM++150")).parseIssue("150");
+			assertEquals(7, issue.getStories().size());
+			assertFalse(issue.isOwned());
+			System.out.println(issue.getStories());
+		}
+		catch (ParseException e)
+		{
+			e.printStackTrace();
+			fail(e.toString());
+		}
+	}
+
+	@Test
+	public void parseIssueOwned()
+		throws SAXException,
+		IOException
+	{
+		Document doc=parseFile("dm154.html");
+		try
+		{
+			Issue issue=new CoaStatefulParser(doc, new URL("https://inducks.org/issue.php?c=es/DM++154")).parseIssue("154");
+			assertEquals(6, issue.getStories().size());
+			assertTrue(issue.isOwned());
 			System.out.println(issue.getStories());
 		}
 		catch (ParseException e)

@@ -3,16 +3,13 @@ package com.samajackun.comcat.parser.coa;
 import static com.samajackun.comcat.parser.coa.TextProcessingUtils.findCollection;
 import static com.samajackun.comcat.parser.coa.TextProcessingUtils.findPublisher;
 import static com.samajackun.comcat.parser.coa.TextProcessingUtils.parseCodeFromUrlArguments;
-import static com.samajackun.comcat.parser.coa.TextProcessingUtils.skipAndMatchCodedItem;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.LocalDate;
 
-import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,40 +30,29 @@ import com.samajackun.comcat.model.NamedCharacterFactory;
 import com.samajackun.comcat.model.Publisher;
 import com.samajackun.comcat.model.Story;
 
-class CoaStatefulParser
+class CoaStatefulParser extends AbstractStatefulParser
 {
 	private static final Log LOG=LogFactory.getLog(CoaStatefulParser.class);
 
-	private final String number;
-
-	private final URL baseUrl;
-
-	private final Document doc;
-
-	private final XPathFactory xpathFactory=XPathFactory.newInstance();
-
-	private final XPath xpath=this.xpathFactory.newXPath();
-
-	public CoaStatefulParser(Document doc, URL baseUrl, String number)
+	public CoaStatefulParser(Document doc, URL baseUrl)
 	{
-		super();
-		this.doc=doc;
-		this.baseUrl=baseUrl;
-		this.number=number;
+		super(doc, baseUrl);
 	}
 
-	public Issue parseIssue()
+	public Issue parseIssue(String number)
 		throws ParseException
 	{
 		try
 		{
-			Publisher publisher=parsePublisher(this.number);
+			Publisher publisher=parsePublisher(number);
 			Collection collection=parseCollection();
 			LocalDate date=parseDate();
-			String code=parseCodeFromUrlArguments(this.baseUrl.getQuery());
+			String code=parseCodeFromUrlArguments(getBaseUrl().getQuery());
 			String title=parseTitle();
 			int pages=parsePages();
-			Issue issue=new Issue(publisher, collection, this.number, date, code, title, pages);
+			Issue issue=new Issue(publisher, collection, number, date, code, title, pages);
+			boolean owned=parseOwned();
+			issue.setOwned(owned);
 			Image cover=parseCover();
 			if (cover != null)
 			{
@@ -82,13 +68,20 @@ class CoaStatefulParser
 		}
 	}
 
+	private boolean parseOwned()
+		throws XPathExpressionException
+	{
+		Element element=(Element)getXpath().evaluate("/html/body//header//img[contains(@src,'owned')]", getDoc(), XPathConstants.NODE);
+		return element != null;
+	}
+
 	private void parseStories(Issue issue)
 		throws XPathExpressionException,
 		ParseException
 	{
-		Element th=(Element)this.xpath.evaluate("//th", this.doc, XPathConstants.NODE);
+		Element th=(Element)getXpath().evaluate("//th", getDoc(), XPathConstants.NODE);
 		Element tbody=(Element)th.getParentNode().getParentNode();
-		NodeList trs=(NodeList)this.xpath.evaluate("tr[td[@bgcolor!=\"#ffcc33\"]]", tbody, XPathConstants.NODESET);
+		NodeList trs=(NodeList)getXpath().evaluate("tr[td[@bgcolor!=\"#ffcc33\"]]", tbody, XPathConstants.NODESET);
 		for (int i=0; i < trs.getLength(); i++)
 		{
 			Element tr=(Element)trs.item(i);
@@ -101,11 +94,11 @@ class CoaStatefulParser
 		throws XPathExpressionException,
 		ParseException
 	{
-		NodeList tds=(NodeList)this.xpath.evaluate("td", tr, XPathConstants.NODESET);
-		String code=parseCodeFromUrlArguments((String)this.xpath.evaluate("a/@href", tds.item(0), XPathConstants.STRING));
-		String title=(String)this.xpath.evaluate("i", tds.item(1), XPathConstants.STRING);
+		NodeList tds=(NodeList)getXpath().evaluate("td", tr, XPathConstants.NODESET);
+		String code=parseCodeFromUrlArguments((String)getXpath().evaluate("a/@href", tds.item(0), XPathConstants.STRING));
+		String title=(String)getXpath().evaluate("i", tds.item(1), XPathConstants.STRING);
 		Story story=new Story(code, title);
-		String pagesStr=(String)this.xpath.evaluate("text()", tds.item(2), XPathConstants.STRING);
+		String pagesStr=(String)getXpath().evaluate("text()", tds.item(2), XPathConstants.STRING);
 		double pages=parseStoryPages(pagesStr);
 		story.setPages(pages);
 		Element authorsElement=(Element)tds.item(3);
@@ -113,7 +106,7 @@ class CoaStatefulParser
 		Element charactersElement=(Element)tds.item(5);
 		parseAppearances(charactersElement, story);
 		// Ahora que la caché de characterNames ya contiene todos los personajes, podemos buscar en ella al prota por nombre:
-		String heroName=(String)this.xpath.evaluate("small", tds.item(1), XPathConstants.STRING);
+		String heroName=(String)getXpath().evaluate("small", tds.item(1), XPathConstants.STRING);
 		NamedCharacter hero=NamedCharacterFactory.getInstance().getByNameOnly(heroName);
 		if (hero != null)
 		{
@@ -151,39 +144,107 @@ class CoaStatefulParser
 		return pages;
 	}
 
+	private enum AuthorState {
+		INITIAL, WRITER, ART, PENCIL, INK, PLOT, COLOUR, SCRIPT, IDEA
+	};
+
 	private void parseAuthors(Element authorsElement, Story story)
 		throws XPathExpressionException,
 		ParseException
 	{
-		NodeList nodeList=(NodeList)this.xpath.evaluate("text()", authorsElement, XPathConstants.NODESET);
+		NodeList nodeList=(NodeList)getXpath().evaluate("a|text()", authorsElement, XPathConstants.NODESET);
+		AuthorState state=AuthorState.INITIAL;
 		for (int i=0; i < nodeList.getLength(); i++)
 		{
-			Text text=(Text)nodeList.item(i);
-			String label=text.getNodeValue().toLowerCase();
-			// TODO Falta cardinalidad>1
-			if (label.contains("writing:"))
+			Node node=nodeList.item(i);
+			switch (node.getNodeType())
 			{
-				CodedItem codedItem=skipAndMatchCodedItem(text);
-				Artist writer=ArtistFactory.getInstance().getByCode(codedItem.getCode(), codedItem.getName());
-				story.setWriter(writer);
-			}
-			else if (label.contains("art:"))
-			{
-				CodedItem codedItem=skipAndMatchCodedItem(text);
-				Artist artist=ArtistFactory.getInstance().getByCode(codedItem.getCode(), codedItem.getName());
-				story.setArt(artist);
-			}
-			else if (label.contains("pencils:"))
-			{
-				CodedItem codedItem=skipAndMatchCodedItem(text);
-				Artist pencil=ArtistFactory.getInstance().getByCode(codedItem.getCode(), codedItem.getName());
-				story.setPencil(pencil);
-			}
-			else if (label.contains("ink:"))
-			{
-				CodedItem codedItem=skipAndMatchCodedItem(text);
-				Artist ink=ArtistFactory.getInstance().getByCode(codedItem.getCode(), codedItem.getName());
-				story.setInk(ink);
+				case Node.TEXT_NODE:
+					Text text=(Text)nodeList.item(i);
+					String label=text.getNodeValue().toLowerCase();
+					if (label.contains(","))
+					{
+						// Es un separador de elementos: Ignorar.
+					}
+					else if (label.contains("writing:"))
+					{
+						state=AuthorState.WRITER;
+					}
+					else if (label.contains("art:"))
+					{
+						state=AuthorState.ART;
+					}
+					else if (label.contains("pencils:"))
+					{
+						state=AuthorState.PENCIL;
+					}
+					else if (label.contains("ink:"))
+					{
+						state=AuthorState.INK;
+					}
+					else if (label.contains("plot:"))
+					{
+						state=AuthorState.PLOT;
+					}
+					else if (label.contains("colours:"))
+					{
+						state=AuthorState.COLOUR;
+					}
+					else if (label.contains("script:"))
+					{
+						state=AuthorState.SCRIPT;
+					}
+					else if (label.contains("idea:"))
+					{
+						state=AuthorState.IDEA;
+					}
+					else
+					{
+						LOG.error("Unrecognized author label: " + label);
+					}
+					break;
+				case Node.ELEMENT_NODE:
+					CodedItem codedItem=TextProcessingUtils.matchCodedItem(node);
+					if ("?".equals(codedItem.getName()))
+					{
+						// Artista desconocido: Ignorar.
+					}
+					else
+					{
+						Artist artist=ArtistFactory.getInstance().getByCode(codedItem.getCode(), codedItem.getName());
+						switch (state)
+						{
+							case INK:
+								story.getInks().add(artist);
+								break;
+							case ART:
+								story.getArts().add(artist);
+								break;
+							case PENCIL:
+								story.getPencils().add(artist);
+								break;
+							case WRITER:
+								story.getWriters().add(artist);
+								break;
+							case PLOT:
+								story.getPlots().add(artist);
+								break;
+							case COLOUR:
+								story.getColours().add(artist);
+								break;
+							case SCRIPT:
+								story.getScripts().add(artist);
+								break;
+							case IDEA:
+								story.getIdeas().add(artist);
+								break;
+							case INITIAL:
+								LOG.error("artist=" + artist + " with no label specified");
+								break;
+							default:
+								throw new IllegalStateException();
+						}
+					}
 			}
 		}
 	}
@@ -195,7 +256,7 @@ class CoaStatefulParser
 		Node firstChild=appearancesElement.getFirstChild();
 		if (firstChild != null && firstChild.getNodeValue() != null && firstChild.getNodeValue().toLowerCase().contains("appearances:"))
 		{
-			NodeList nodeList=(NodeList)this.xpath.evaluate("a|text()", appearancesElement, XPathConstants.NODESET);
+			NodeList nodeList=(NodeList)getXpath().evaluate("a|text()", appearancesElement, XPathConstants.NODESET);
 			for (int i=1; i < nodeList.getLength(); i++)
 			{
 				Node child=nodeList.item(i);
@@ -221,17 +282,28 @@ class CoaStatefulParser
 		throws XPathExpressionException,
 		MalformedURLException
 	{
-		String imgUri=(String)this.xpath.evaluate("/html/body/div[@role='main']//div[@class='image']/img/@src", this.doc, XPathConstants.STRING);
-		URL url=new URL(this.baseUrl, imgUri);
-		Image image=ImageFactory.getInstance().getImage(url);
+		String imgUri=(String)getXpath().evaluate("/html/body/div[@role='main']//div[@class='image']/img/@src", getDoc(), XPathConstants.STRING);
+		String imgUriId=TextProcessingUtils.getValueFromUrlArguments(imgUri, "image");
+		if (imgUriId == null)
+		{
+			imgUriId=imgUri.toString();
+		}
+		imgUriId=toFileName(imgUriId);
+		URL url=new URL(getBaseUrl(), imgUri);
+		Image image=ImageFactory.getInstance().getImage(url, imgUriId);
 		return image;
+	}
+
+	private static String toFileName(String src)
+	{
+		return src.replaceAll("[\\:/\\\\\\?\\&]+", "_");
 	}
 
 	int parsePages()
 		throws XPathExpressionException
 	{
 		int pages=-1;
-		NodeList allTextChildren=(NodeList)this.xpath.evaluate("/html/body/div[@role='main']//text()", this.doc, XPathConstants.NODESET);
+		NodeList allTextChildren=(NodeList)getXpath().evaluate("/html/body/div[@role='main']//text()", getDoc(), XPathConstants.NODESET);
 		for (int i=0; pages < 0 && i < allTextChildren.getLength(); i++)
 		{
 			Text child=(Text)allTextChildren.item(i);
@@ -256,7 +328,7 @@ class CoaStatefulParser
 	String parseTitle()
 		throws XPathExpressionException
 	{
-		String h1=(String)this.xpath.evaluate("//h1", this.doc, XPathConstants.STRING);
+		String h1=(String)getXpath().evaluate("//h1", getDoc(), XPathConstants.STRING);
 		int p=h1.indexOf(':');
 		int p2=h1.indexOf('#', p);
 		return p2 >= 0
@@ -267,17 +339,19 @@ class CoaStatefulParser
 	LocalDate parseDate()
 		throws XPathExpressionException
 	{
-		String date=(String)this.xpath.evaluate("//time/@datetime", this.doc, XPathConstants.STRING);
-		return LocalDate.parse((date.length() >= 8)
-			? date
-			: date + "-01");
+		String date=((String)getXpath().evaluate("//time/@datetime", getDoc(), XPathConstants.STRING)).trim();
+		return date.isEmpty()
+			? null
+			: LocalDate.parse((date.length() >= 8)
+				? date
+				: date + "-01");
 	}
 
 	// String parseNumber()
 	// throws XPathExpressionException,
 	// ParseException
 	// {
-	// String title=(String)this.xpath.evaluate("//h1", this.doc, XPathConstants.STRING);
+	// String title=(String)getXpath().evaluate("//h1", getDoc(), XPathConstants.STRING);
 	// int p=title.indexOf('#');
 	// if (p < 0)
 	// {
@@ -290,13 +364,13 @@ class CoaStatefulParser
 	// throws MalformedURLException,
 	// XPathExpressionException
 	// {
-	// return new URL((String)this.xpath.evaluate("/html/head/base@href", this.doc, XPathConstants.STRING));
+	// return new URL((String)getXpath().evaluate("/html/head/base@href", getDoc(), XPathConstants.STRING));
 	// }
 
 	Publisher parsePublisher(String number)
 		throws XPathExpressionException
 	{
-		NodeList allTextChildren=(NodeList)this.xpath.evaluate("/html/body/div[@role='main']//text()", this.doc, XPathConstants.NODESET);
+		NodeList allTextChildren=(NodeList)getXpath().evaluate("/html/body/div[@role='main']//text()", getDoc(), XPathConstants.NODESET);
 		Publisher publisher=null;
 		for (int i=0; publisher == null && i < allTextChildren.getLength(); i++)
 		{
@@ -314,7 +388,7 @@ class CoaStatefulParser
 		throws XPathExpressionException,
 		ParseException
 	{
-		NodeList allTextChildren=(NodeList)this.xpath.evaluate("/html/body/div[@role='main']//text()", this.doc, XPathConstants.NODESET);
+		NodeList allTextChildren=(NodeList)getXpath().evaluate("/html/body/div[@role='main']//text()", getDoc(), XPathConstants.NODESET);
 		Collection collection=null;
 		for (int i=0; collection == null && i < allTextChildren.getLength(); i++)
 		{

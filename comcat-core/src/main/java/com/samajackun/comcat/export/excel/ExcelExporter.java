@@ -28,10 +28,10 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 
 import com.samajackun.comcat.export.Exporter;
+import com.samajackun.comcat.model.AbstractCodedObject;
 import com.samajackun.comcat.model.Image;
 import com.samajackun.comcat.model.Image.Format;
 import com.samajackun.comcat.model.Issue;
-import com.samajackun.comcat.model.NamedCharacter;
 import com.samajackun.comcat.model.Story;
 
 public class ExcelExporter implements Exporter
@@ -61,6 +61,8 @@ public class ExcelExporter implements Exporter
 	{
 		try (HSSFWorkbook wb=new HSSFWorkbook())
 		{
+			wb.createInformationProperties();
+			// wb.getDocumentSummaryInformation();
 			HSSFSheet sheet=wb.createSheet("números");
 			initSheet(sheet);
 			issues.forEach(x -> export(x, sheet));
@@ -129,16 +131,6 @@ public class ExcelExporter implements Exporter
 
 		int cell=0;
 
-		// Publisher
-		row.createCell(cell).setCellValue(issue.getPublisher().getName());
-		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
-		cell++;
-
-		// Collection
-		row.createCell(cell).setCellValue(issue.getCollection().getName());
-		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
-		cell++;
-
 		// Issue number
 		row.createCell(cell).setCellValue(issue.getNumber() == null
 			? ""
@@ -161,20 +153,20 @@ public class ExcelExporter implements Exporter
 		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
 		cell++;
 
-		// Issue backcover
-		if (issue.getBackCover() != null)
-		{
-			try
-			{
-				putImage(issue.getBackCover(), sheet, rowNum, cell);
-			}
-			catch (IOException e)
-			{
-				LOG.error("Error loading backcover image data from issue " + issue);
-			}
-		}
-		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
-		cell++;
+		// // Issue backcover
+		// if (issue.getBackCover() != null)
+		// {
+		// try
+		// {
+		// putImage(issue.getBackCover(), sheet, rowNum, cell);
+		// }
+		// catch (IOException e)
+		// {
+		// LOG.error("Error loading backcover image data from issue " + issue);
+		// }
+		// }
+		// sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
+		// cell++;
 
 		// Issue date
 		row.createCell(cell).setCellValue(issue.getDate());
@@ -183,6 +175,21 @@ public class ExcelExporter implements Exporter
 
 		// Issue code
 		row.createCell(cell).setCellValue(issue.getCode());
+		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
+		cell++;
+
+		// Publisher
+		row.createCell(cell).setCellValue(issue.getPublisher().getName());
+		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
+		cell++;
+
+		// Collection
+		row.createCell(cell).setCellValue(issue.getCollection().getName());
+		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
+		cell++;
+
+		// Owned
+		row.createCell(cell).setCellValue(issue.isOwned());
 		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
 		cell++;
 
@@ -241,22 +248,18 @@ public class ExcelExporter implements Exporter
 			: story.getHero().getName());
 		row.createCell(cell++).setCellValue(serialize(story.getCharacters()));
 		row.createCell(cell++).setCellValue(story.getPages());
-		row.createCell(cell++).setCellValue(story.getArt() == null
-			? ""
-			: story.getArt().getName());
-		row.createCell(cell++).setCellValue(story.getInk() == null
-			? ""
-			: story.getInk().getName());
-		row.createCell(cell++).setCellValue(story.getPencil() == null
-			? ""
-			: story.getPencil().getName());
-		row.createCell(cell++).setCellValue(story.getWriter() == null
-			? ""
-			: story.getWriter().getName());
+		row.createCell(cell++).setCellValue(serialize(story.getArts()));
+		row.createCell(cell++).setCellValue(serialize(story.getInks()));
+		row.createCell(cell++).setCellValue(serialize(story.getPencils()));
+		row.createCell(cell++).setCellValue(serialize(story.getWriters()));
+		row.createCell(cell++).setCellValue(serialize(story.getPlots()));
+		row.createCell(cell++).setCellValue(serialize(story.getColours()));
+		row.createCell(cell++).setCellValue(serialize(story.getScripts()));
+		row.createCell(cell++).setCellValue(serialize(story.getIdeas()));
 		rowIndex.inc();
 	}
 
-	private static String serialize(Set<NamedCharacter> characters)
+	private static String serialize(Set<? extends AbstractCodedObject> characters)
 	{
 		StringBuilder s=new StringBuilder(20 * characters.size());
 		characters.stream().forEach(x -> {

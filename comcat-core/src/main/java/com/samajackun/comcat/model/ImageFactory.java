@@ -61,7 +61,7 @@ public final class ImageFactory
 					catch (IOException e)
 					{
 						image=null;
-						LOG.error("Error copying image " + src.getAbsolutePath() + " to " + this.root.getAbsolutePath());
+						LOG.error("Error copying image " + src.getAbsolutePath() + " to " + this.root.getAbsolutePath() + ": " + e.getMessage());
 					}
 				}
 				else
@@ -77,11 +77,10 @@ public final class ImageFactory
 		return image;
 	}
 
-	public Image getImage(URL src)
+	public Image getImage(URL src, String imageId)
 	{
 		Image image;
-		String name=toFileName(src);
-		File cachedFile=new File(this.root, name);
+		File cachedFile=new File(this.root, imageId);
 		if (!cachedFile.exists())
 		{
 			synchronized (this)
@@ -109,7 +108,7 @@ public final class ImageFactory
 					catch (IOException e)
 					{
 						image=null;
-						LOG.error("Error downloading image " + src + " to " + this.root.getAbsolutePath());
+						LOG.error("Error downloading image " + src + " to " + this.root.getAbsolutePath() + ": " + e.getMessage());
 					}
 				}
 				else
@@ -142,12 +141,5 @@ public final class ImageFactory
 				format=null;
 		}
 		return format;
-	}
-
-	private static String toFileName(URL src)
-	{
-		String s=src.toString();
-		s=s.replaceAll("[\\:/\\\\\\?\\&]+", "_");
-		return s;
 	}
 }

@@ -1,6 +1,6 @@
 package com.samajackun.comcat.model;
 
-public abstract class AbstractCodedObject
+public abstract class AbstractCodedObject implements Comparable<AbstractCodedObject>
 {
 	private final String code;
 
@@ -21,6 +21,12 @@ public abstract class AbstractCodedObject
 	public String getName()
 	{
 		return this.name;
+	}
+
+	@Override
+	public int compareTo(AbstractCodedObject o)
+	{
+		return this.name.compareTo(o.name);
 	}
 
 	@Override

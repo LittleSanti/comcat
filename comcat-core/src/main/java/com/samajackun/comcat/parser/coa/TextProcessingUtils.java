@@ -120,7 +120,14 @@ final class TextProcessingUtils
 
 	public static String parseCodeFromUrlArguments(String href)
 	{
-		int p=href.indexOf("c=");
+		return getValueFromUrlArguments(href, "c");
+	}
+
+	public static String getValueFromUrlArguments(String href, String name)
+	{
+		href=decodeUrl(href);
+		String prefix=name + "=";
+		int p=href.indexOf(prefix);
 		int p2=href.indexOf('&', p);
 		if (p2 < 0)
 		{
@@ -128,7 +135,7 @@ final class TextProcessingUtils
 		}
 		return p < 0
 			? null
-			: href.substring(p + "c=".length(), p2);
+			: href.substring(p + prefix.length(), p2);
 	}
 
 	public static String matchCode(Node child)
