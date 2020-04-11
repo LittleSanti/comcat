@@ -2,9 +2,13 @@ package com.samajackun.comcat.export.excel;
 
 import java.awt.Dimension;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.Manifest;
 import java.util.stream.Stream;
 
 import org.apache.commons.logging.Log;
@@ -29,6 +33,7 @@ import org.apache.poi.ss.util.CellRangeAddress;
 
 import com.samajackun.comcat.export.Exporter;
 import com.samajackun.comcat.model.AbstractCodedObject;
+import com.samajackun.comcat.model.Collection;
 import com.samajackun.comcat.model.Image;
 import com.samajackun.comcat.model.Image.Format;
 import com.samajackun.comcat.model.Issue;
@@ -46,6 +51,8 @@ public class ExcelExporter implements Exporter
 
 	private final List<ColumnSetup> columnSetups;
 
+	private final String version=readVersion();
+
 	public ExcelExporter(int minIssueRows, int coverWidthInPixels, int coverHeightInPixels, List<ColumnSetup> columnSetups)
 	{
 		super();
@@ -55,15 +62,50 @@ public class ExcelExporter implements Exporter
 		this.columnSetups=columnSetups;
 	}
 
+	private String readVersion()
+	{
+		String fullClassName=getClass().getName() + ".class";
+		String className=getClass().getSimpleName() + ".class";
+		URL url=getClass().getResource(className);
+		String classLocation=url.toString();
+		String manifestLocation=classLocation.substring(0, classLocation.length() - fullClassName.length()) + "META-INF/MANIFEST.MF";
+		try (InputStream input=getClass().getResourceAsStream(manifestLocation))
+		{
+			if (input != null)
+			{
+				Manifest manifest=new Manifest(input);
+				return manifest.getMainAttributes().getValue("Implementation-Version");
+			}
+			else
+			{
+				return "";
+			}
+		}
+		catch (IOException e)
+		{
+			return "";
+		}
+	}
+
 	@Override
-	public void export(Stream<Issue> issues, OutputStream output)
+	public void export(Collection collection, OutputStream output, String title)
+		throws IOException
+	{
+		export(collection.getIssues().values().stream(), output, title);
+	}
+
+	@Override
+	public void export(Stream<Issue> issues, OutputStream output, String title)
 		throws IOException
 	{
 		try (HSSFWorkbook wb=new HSSFWorkbook())
 		{
 			wb.createInformationProperties();
-			// wb.getDocumentSummaryInformation();
-			HSSFSheet sheet=wb.createSheet("números");
+			wb.getSummaryInformation().setAuthor("Comcat " + this.version + ", Samajackun Software 2021");
+			wb.getSummaryInformation().setSubject("colección de comics");
+			wb.getSummaryInformation().setCreateDateTime(new Date());
+			wb.getSummaryInformation().setTitle(title);
+			HSSFSheet sheet=wb.createSheet(title);
 			initSheet(sheet);
 			issues.forEach(x -> export(x, sheet));
 			wb.write(output);

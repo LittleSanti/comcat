@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
@@ -82,22 +81,11 @@ class CoaStatefulIndexParser extends AbstractStatefulParser
 		URL issueUrl=new URL(getBaseUrl(), href);
 		URLConnection connection=issueUrl.openConnection();
 		connection.addRequestProperty("Accept-Language", "es-ES;q=0.5,es;q=0.3");
-		String contentType=connection.getHeaderField("Content-Type");
-		if (contentType.startsWith("text/html"))
+		Charset inputCharset=TextProcessingUtils.getHtmlEncoding(connection);
+		try (InputStream input=connection.getInputStream())
 		{
-			int p=contentType.indexOf("charset=");
-			Charset inputCharset=(p >= 0)
-				? Charset.forName(contentType.substring(p + "charset=".length()).trim())
-				: StandardCharsets.ISO_8859_1;
-			try (InputStream input=connection.getInputStream())
-			{
-				Issue issue=issueParser.parseIssue(input, inputCharset, issueUrl, number);
-				return issue;
-			}
-		}
-		else
-		{
-			throw new IllegalArgumentException("Unsupported content type " + contentType + " when loading issue.");
+			Issue issue=issueParser.parseIssue(input, inputCharset, issueUrl, number);
+			return issue;
 		}
 	}
 

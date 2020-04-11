@@ -35,7 +35,7 @@ public class ExcelExporterTest
 		File file=new File("target/x1.xls");
 		try (OutputStream output=new FileOutputStream(file))
 		{
-			exporter.export(Arrays.asList(issues).stream(), output);
+			exporter.export(Arrays.asList(issues).stream(), output, "mi colección");
 		}
 	}
 
@@ -51,7 +51,7 @@ public class ExcelExporterTest
 		File file=new File("target/x2.xls");
 		try (OutputStream output=new FileOutputStream(file))
 		{
-			exporter.export(Arrays.asList(issues).stream(), output);
+			exporter.export(Arrays.asList(issues).stream(), output, "mi colección");
 		}
 	}
 
@@ -67,7 +67,7 @@ public class ExcelExporterTest
 		File file=new File("target/x3.xls");
 		try (OutputStream output=new FileOutputStream(file))
 		{
-			exporter.export(Arrays.asList(issues).stream(), output);
+			exporter.export(Arrays.asList(issues).stream(), output, "mi colección");
 		}
 	}
 
@@ -96,7 +96,7 @@ public class ExcelExporterTest
 		File file=new File("target/x4.xls");
 		try (OutputStream output=new FileOutputStream(file))
 		{
-			exporter.export(Arrays.asList(issues).stream(), output);
+			exporter.export(Arrays.asList(issues).stream(), output, "mi colección");
 		}
 	}
 

@@ -72,7 +72,7 @@ public class CoaParserTest
 			File file=new File("target/dbm.xls");
 			try (OutputStream output=new FileOutputStream(file))
 			{
-				exporter.export(collection.getIssues().values().stream(), output);
+				exporter.export(collection.getIssues().values().stream(), output, "dumbo montena");
 			}
 		}
 		catch (ParseException e)

@@ -1,7 +1,10 @@
 package com.samajackun.comcat.parser.coa;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URLConnection;
 import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ServiceConfigurationError;
 
 import org.w3c.dom.Element;
@@ -194,6 +197,22 @@ final class TextProcessingUtils
 		catch (UnsupportedEncodingException e)
 		{
 			throw new ServiceConfigurationError(e.toString(), e);
+		}
+	}
+
+	public static Charset getHtmlEncoding(URLConnection connection)
+	{
+		String contentType=connection.getHeaderField("Content-Type");
+		if (contentType.startsWith("text/html"))
+		{
+			int p=contentType.indexOf("charset=");
+			return (p >= 0)
+				? Charset.forName(contentType.substring(p + "charset=".length()).trim())
+				: StandardCharsets.ISO_8859_1;
+		}
+		else
+		{
+			throw new IllegalArgumentException("Unsupported content type " + contentType + " when loading issue.");
 		}
 	}
 

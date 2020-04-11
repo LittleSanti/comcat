@@ -81,7 +81,7 @@ class CoaStatefulParser extends AbstractStatefulParser
 	{
 		Element th=(Element)getXpath().evaluate("//th", getDoc(), XPathConstants.NODE);
 		Element tbody=(Element)th.getParentNode().getParentNode();
-		NodeList trs=(NodeList)getXpath().evaluate("tr[td[@bgcolor!=\"#ffcc33\"]]", tbody, XPathConstants.NODESET);
+		NodeList trs=(NodeList)getXpath().evaluate("tr[td[@bgcolor!='#ffcc33']]", tbody, XPathConstants.NODESET);
 		for (int i=0; i < trs.getLength(); i++)
 		{
 			Element tr=(Element)trs.item(i);

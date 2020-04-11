@@ -77,6 +77,50 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.5</version>
+				<executions>
+					<execution>
+						<id>default-jar</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classesDirectory>${project.build.outputDirectory}</classesDirectory>
+							<outputDirectory>${project.build.directory}</outputDirectory>
+							<archive>
+								<manifest>
+									<addClasspath>false</addClasspath>
+									<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+									<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+								</manifest>
+								<manifestEntries>
+									<Created-By>${project.organization.name}</Created-By>
+									<Implementation-Date>${maven.build.timestamp}</Implementation-Date>
+									<Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+									<Implementation-Version>${project.version}</Implementation-Version>
+									<Implementation-Title>${project.artifactId}</Implementation-Title>
+									<Implementation-Date>${maven.build.timestamp}</Implementation-Date>
+									<Inception-Year>${project.inceptionYear}</Inception-Year>
+								</manifestEntries>
+							</archive>
+						</configuration>
+					</execution>
+					<execution>
+						<id>test-jar</id>
+						<phase>package</phase>
+						<goals>
+							<goal>test-jar</goal>
+						</goals>
+						<configuration>
+							<classifier>tests</classifier>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 		<pluginManagement>
 			<plugins>
