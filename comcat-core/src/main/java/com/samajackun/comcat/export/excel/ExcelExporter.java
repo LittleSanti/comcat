@@ -212,6 +212,10 @@ public class ExcelExporter implements Exporter
 
 		// Issue date
 		row.createCell(cell).setCellValue(issue.getDate());
+		if (issue.getDate() == null)
+		{
+			row.getCell(cell).setBlank();
+		}
 		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
 		cell++;
 
@@ -236,7 +240,7 @@ public class ExcelExporter implements Exporter
 		cell++;
 
 		// Issue title
-		row.createCell(cell).setCellValue(issue.getTitle() == null
+		setCellValueStringNoBlank(row.createCell(cell), issue.getTitle() == null
 			? ""
 			: issue.getTitle());
 		sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum + issueRows - 1, cell, cell));
@@ -249,7 +253,11 @@ public class ExcelExporter implements Exporter
 		issue.getStories().stream().forEach(x -> exportStory(x, sheet, rowIndex, currentCell));
 		for (int i=rowIndex.getIndex(); i < rowNum + issueRows; i++)
 		{
-			sheet.createRow(i);
+			HSSFRow rowBlank=sheet.createRow(i);
+			for (int j=0; j < this.columnSetups.size(); j++)
+			{
+				rowBlank.createCell(j).setBlank();
+			}
 		}
 	}
 
@@ -282,23 +290,33 @@ public class ExcelExporter implements Exporter
 			? sheet.getRow(rowNum)
 			: sheet.createRow(rowNum);
 		row.createCell(cell++).setCellValue(story.getCode());
-		row.createCell(cell++).setCellValue(story.getTitle() == null
-			? ""
-			: story.getTitle());
-		row.createCell(cell++).setCellValue(story.getHero() == null
+		setCellValueStringNoBlank(row.createCell(cell++), story.getTitle());
+		setCellValueStringNoBlank(row.createCell(cell++), story.getHero() == null
 			? ""
 			: story.getHero().getName());
-		row.createCell(cell++).setCellValue(serialize(story.getCharacters()));
+		setCellValueStringNoBlank(row.createCell(cell++), serialize(story.getCharacters()));
 		row.createCell(cell++).setCellValue(story.getPages());
-		row.createCell(cell++).setCellValue(serialize(story.getArts()));
-		row.createCell(cell++).setCellValue(serialize(story.getInks()));
-		row.createCell(cell++).setCellValue(serialize(story.getPencils()));
-		row.createCell(cell++).setCellValue(serialize(story.getWriters()));
-		row.createCell(cell++).setCellValue(serialize(story.getPlots()));
-		row.createCell(cell++).setCellValue(serialize(story.getColours()));
-		row.createCell(cell++).setCellValue(serialize(story.getScripts()));
-		row.createCell(cell++).setCellValue(serialize(story.getIdeas()));
+		setCellValueStringNoBlank(row.createCell(cell++), serialize(story.getArts()));
+		setCellValueStringNoBlank(row.createCell(cell++), serialize(story.getInks()));
+		setCellValueStringNoBlank(row.createCell(cell++), serialize(story.getPencils()));
+		setCellValueStringNoBlank(row.createCell(cell++), serialize(story.getWriters()));
+		setCellValueStringNoBlank(row.createCell(cell++), serialize(story.getPlots()));
+		setCellValueStringNoBlank(row.createCell(cell++), serialize(story.getColours()));
+		setCellValueStringNoBlank(row.createCell(cell++), serialize(story.getScripts()));
+		setCellValueStringNoBlank(row.createCell(cell++), serialize(story.getIdeas()));
 		rowIndex.inc();
+	}
+
+	private static void setCellValueStringNoBlank(HSSFCell cell, String value)
+	{
+		if (value == null || value.isEmpty())
+		{
+			cell.setBlank();
+		}
+		else
+		{
+			cell.setCellValue(value);
+		}
 	}
 
 	private static String serialize(Set<? extends AbstractCodedObject> characters)
