@@ -27,5 +27,10 @@ public abstract class AbstractCodedObjectFactory<T extends AbstractCodedObject>
 		});
 	}
 
+	public T getByNameOnly(String name)
+	{
+		return this.mapByName.get(name);
+	}
+
 	protected abstract T create(String code, String name);
 }

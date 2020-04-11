@@ -6,11 +6,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
+
+import com.samajackun.comcat.model.Image.Format;
 
 public final class ImageFactory
 {
@@ -77,7 +80,7 @@ public final class ImageFactory
 	public Image getImage(URL src)
 	{
 		Image image;
-		String name=getName(src);
+		String name=toFileName(src);
 		File cachedFile=new File(this.root, name);
 		if (!cachedFile.exists())
 		{
@@ -85,10 +88,23 @@ public final class ImageFactory
 			{
 				if (!cachedFile.exists())
 				{
-					try (InputStream input=src.openStream(); OutputStream output=new FileOutputStream(cachedFile))
+					try
 					{
-						IOUtils.copy(input, output);
-						image=new FileImage(cachedFile);
+						URLConnection connection=src.openConnection();
+						String contentType=connection.getContentType();
+						Image.Format format=toImageFormat(contentType);
+						if (format == null)
+						{
+							image=null;
+						}
+						else
+						{
+							try (InputStream input=connection.getInputStream(); OutputStream output=new FileOutputStream(cachedFile))
+							{
+								IOUtils.copy(input, output);
+								image=new FileImage(cachedFile, format);
+							}
+						}
 					}
 					catch (IOException e)
 					{
@@ -109,11 +125,29 @@ public final class ImageFactory
 		return image;
 	}
 
-	private static String getName(URL src)
+	private Format toImageFormat(String contentType)
 	{
-		int p=src.getPath().lastIndexOf('/');
-		return p < 0
-			? src.getPath()
-			: src.getPath().substring(1 + p);
+		Format format;
+		switch (contentType)
+		{
+			case "image/jpg":
+			case "image/jpeg":
+				format=Format.JPG;
+				break;
+			case "image/png":
+				format=Format.PNG;
+				break;
+			default:
+				LOG.error("Unsupported content type " + contentType);
+				format=null;
+		}
+		return format;
+	}
+
+	private static String toFileName(URL src)
+	{
+		String s=src.toString();
+		s=s.replaceAll("[\\:/\\\\\\?\\&]+", "_");
+		return s;
 	}
 }

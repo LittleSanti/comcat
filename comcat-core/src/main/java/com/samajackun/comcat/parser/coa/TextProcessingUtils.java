@@ -94,7 +94,7 @@ final class TextProcessingUtils
 				}
 				else if (textContent.contains("publication:"))
 				{
-					publication=matchCodedItem(sibling);
+					publication=skipAndMatchCodedItem(sibling);
 				}
 				else if (textContent.contains("language:"))
 				{
@@ -152,15 +152,20 @@ final class TextProcessingUtils
 		return code;
 	}
 
-	public static CodedItem matchCodedItem(Node child)
+	public static CodedItem skipAndMatchCodedItem(Node child)
+		throws ParseException
+	{
+		return matchCodedItem(child.getNextSibling());
+	}
+
+	public static CodedItem matchCodedItem(Node src)
 		throws ParseException
 	{
 		CodedItem codedItem;
-		Node sibling=child.getNextSibling();
-		String siblingName=sibling.getNodeName();
+		String siblingName=src.getNodeName();
 		if ("a".equalsIgnoreCase(siblingName))
 		{
-			Element a=(Element)sibling;
+			Element a=(Element)src;
 			String href=decodeUrl(a.getAttribute("href"));
 			String code=parseCodeFromUrlArguments(href);
 			String name=a.getFirstChild().getNodeValue();
@@ -168,7 +173,7 @@ final class TextProcessingUtils
 		}
 		else
 		{
-			throw new ParseException("Expected A instead of " + sibling.getNodeName());
+			throw new ParseException("Expected A instead of " + src.getNodeName());
 		}
 		return codedItem;
 	}
@@ -184,4 +189,5 @@ final class TextProcessingUtils
 			throw new ServiceConfigurationError(e.toString(), e);
 		}
 	}
+
 }

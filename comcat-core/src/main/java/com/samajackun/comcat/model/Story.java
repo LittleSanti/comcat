@@ -119,4 +119,10 @@ public class Story
 		return this.characters;
 	}
 
+	@Override
+	public String toString()
+	{
+		return "Story [code=" + this.code + ", title=" + this.title + ", pages=" + this.pages + ", hero=" + this.hero + ", writer=" + this.writer + ", ink=" + this.ink + ", art=" + this.art + ", pencil=" + this.pencil + ", cover=" + this.cover + ", characters=" + this.characters + "]";
+	}
+
 }

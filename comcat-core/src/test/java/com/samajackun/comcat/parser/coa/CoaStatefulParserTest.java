@@ -2,12 +2,16 @@ package com.samajackun.comcat.parser.coa;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 
 import javax.xml.xpath.XPathExpressionException;
 
@@ -17,6 +21,7 @@ import org.w3c.tidy.Tidy;
 import org.xml.sax.SAXException;
 
 import com.samajackun.comcat.model.Collection;
+import com.samajackun.comcat.model.Issue;
 import com.samajackun.comcat.model.Publisher;
 
 public class CoaStatefulParserTest
@@ -40,6 +45,7 @@ public class CoaStatefulParserTest
 		try (InputStream input=new FileInputStream(new File(testDir, fileName)))
 		{
 			Tidy tidy=new Tidy();
+			tidy.setInputEncoding(StandardCharsets.UTF_8.name());
 			Document doc=tidy.parseDOM(input, null);
 			return doc;
 		}
@@ -53,9 +59,9 @@ public class CoaStatefulParserTest
 		Document doc=parseFile("dm150.html");
 		try
 		{
-			Publisher publisher=new CoaStatefulParser(doc, null).parsePublisher("150");
+			Publisher publisher=new CoaStatefulParser(doc, null, "150").parsePublisher("150");
 			assertNotNull(publisher);
-			assertEquals("Mont", publisher.getCode());
+			assertEquals("Montena", publisher.getCode());
 			assertEquals("Montena", publisher.getName());
 		}
 		catch (XPathExpressionException e)
@@ -73,7 +79,7 @@ public class CoaStatefulParserTest
 		Document doc=parseFile("wdc150.html");
 		try
 		{
-			Publisher publisher=new CoaStatefulParser(doc, null).parsePublisher("150");
+			Publisher publisher=new CoaStatefulParser(doc, null, "150").parsePublisher("150");
 			assertNotNull(publisher);
 			assertEquals("Dl", publisher.getCode());
 			assertEquals("Dell", publisher.getName());
@@ -85,24 +91,24 @@ public class CoaStatefulParserTest
 		}
 	}
 
-	@Test
-	public void parseNumber()
-		throws SAXException,
-		IOException
-	{
-		Document doc=parseFile("wdc150.html");
-		try
-		{
-			String number=new CoaStatefulParser(doc, null).parseNumber();
-			assertNotNull(number);
-			assertEquals("150", number);
-		}
-		catch (XPathExpressionException | ParseException e)
-		{
-			e.printStackTrace();
-			fail(e.toString());
-		}
-	}
+	// @Test
+	// public void parseNumber()
+	// throws SAXException,
+	// IOException
+	// {
+	// Document doc=parseFile("wdc150.html");
+	// try
+	// {
+	// String number=new CoaStatefulParser(doc, null, "150").parseNumber();
+	// assertNotNull(number);
+	// assertEquals("150", number);
+	// }
+	// catch (XPathExpressionException | ParseException e)
+	// {
+	// e.printStackTrace();
+	// fail(e.toString());
+	// }
+	// }
 
 	@Test
 	public void parseCollection()
@@ -112,7 +118,7 @@ public class CoaStatefulParserTest
 		Document doc=parseFile("wdc150.html");
 		try
 		{
-			Collection collection=new CoaStatefulParser(doc, null).parseCollection();
+			Collection collection=new CoaStatefulParser(doc, null, "150").parseCollection();
 			assertNotNull(collection);
 			assertEquals("us/WDC", collection.getCode());
 			assertEquals("Walt Disney's Comics and Stories", collection.getName());
@@ -120,6 +126,134 @@ public class CoaStatefulParserTest
 			assertEquals("en", collection.getLanguage());
 		}
 		catch (XPathExpressionException | ParseException e)
+		{
+			e.printStackTrace();
+			fail(e.toString());
+		}
+	}
+
+	@Test
+	public void parseDateWithYearMonthDay()
+		throws SAXException,
+		IOException
+	{
+		Document doc=parseFile("dm150.html");
+		try
+		{
+			LocalDate date=new CoaStatefulParser(doc, null, "150").parseDate();
+			assertNotNull(date);
+			assertEquals("1979-08-23", date.toString());
+		}
+		catch (XPathExpressionException e)
+		{
+			e.printStackTrace();
+			fail(e.toString());
+		}
+	}
+
+	@Test
+	public void parseDateWithYearMonth()
+		throws SAXException,
+		IOException
+	{
+		Document doc=parseFile("wdc150.html");
+		try
+		{
+			LocalDate date=new CoaStatefulParser(doc, null, "150").parseDate();
+			assertNotNull(date);
+			assertEquals("1953-03-01", date.toString());
+		}
+		catch (XPathExpressionException e)
+		{
+			e.printStackTrace();
+			fail(e.toString());
+		}
+	}
+
+	@Test
+	public void parseDefaultTitle()
+		throws SAXException,
+		IOException
+	{
+		Document doc=parseFile("dm150.html");
+		try
+		{
+			String title=new CoaStatefulParser(doc, null, "150").parseTitle();
+			assertNull(title);
+		}
+		catch (XPathExpressionException e)
+		{
+			e.printStackTrace();
+			fail(e.toString());
+		}
+	}
+
+	@Test
+	public void parseExplicitTitle()
+		throws SAXException,
+		IOException
+	{
+		Document doc=parseFile("d132.html");
+		try
+		{
+			String title=new CoaStatefulParser(doc, null, "32").parseTitle();
+			assertEquals("Examen de conciencia", title);
+		}
+		catch (XPathExpressionException e)
+		{
+			e.printStackTrace();
+			fail(e.toString());
+		}
+	}
+
+	@Test
+	public void parsePagesPresent()
+		throws SAXException,
+		IOException
+	{
+		Document doc=parseFile("dm150.html");
+		try
+		{
+			int pages=new CoaStatefulParser(doc, null, "150").parsePages();
+			assertEquals(100, pages);
+		}
+		catch (XPathExpressionException e)
+		{
+			e.printStackTrace();
+			fail(e.toString());
+		}
+	}
+
+	@Test
+	public void parsePagesNotPresent()
+		throws SAXException,
+		IOException
+	{
+		Document doc=parseFile("wdc150.html");
+		try
+		{
+			int pages=new CoaStatefulParser(doc, null, "150").parsePages();
+			assertEquals(-1, pages);
+		}
+		catch (XPathExpressionException e)
+		{
+			e.printStackTrace();
+			fail(e.toString());
+		}
+	}
+
+	@Test
+	public void parseIssue()
+		throws SAXException,
+		IOException
+	{
+		Document doc=parseFile("dm150.html");
+		try
+		{
+			Issue issue=new CoaStatefulParser(doc, new URL("https://inducks.org/issue.php?c=es/DM++150"), "150").parseIssue();
+			System.out.println(issue.getStories());
+		}
+		catch (ParseException e)
 		{
 			e.printStackTrace();
 			fail(e.toString());
