@@ -288,9 +288,17 @@ class CoaStatefulParser extends AbstractStatefulParser
 		{
 			imgUriId=imgUri.toString();
 		}
-		imgUriId=toFileName(imgUriId);
-		URL url=new URL(getBaseUrl(), imgUri);
-		Image image=ImageFactory.getInstance().getImage(url, imgUriId);
+		Image image;
+		if (imgUriId.isEmpty())
+		{
+			image=null;
+		}
+		else
+		{
+			imgUriId=toFileName(imgUriId);
+			URL url=new URL(getBaseUrl(), imgUri);
+			image=ImageFactory.getInstance().getImage(url, imgUriId);
+		}
 		return image;
 	}
 
